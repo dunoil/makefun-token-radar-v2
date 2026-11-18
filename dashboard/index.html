@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Radar — which pre-token protocols are worth farming?</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <p class="kicker">Token Radar · model radar-3 · snapshot <span id="asOf">—</span></p>
+      <h1>Which pre-token protocols are worth farming?</h1>
+      <p class="lede">Every protocol in the snapshot that <strong>records no token</strong>, ranked by what a launch
+      would be worth if its record stayed as it is. An implied value is the model's claim — not a
+      price, not a prediction that a token will be issued.</p>
+    </div>
+    <dl class="stats" id="stats"></dl>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Views">
+  <button class="tab active" data-view="board" type="button">Board</button>
+  <button class="tab" data-view="live" type="button">Already trading</button>
+  <button class="tab" data-view="model" type="button">How the model works</button>
+</nav>
+
+<main>
+  <section id="view-board" class="view">
+    <form class="filters" id="filters">
+      <label class="filter grow">Search
+        <input type="search" id="q" placeholder="Name or slug…" autocomplete="off">
+      </label>
+      <label class="filter">Segment
+        <select id="seg">
+          <option value="all">All 342 pre-token</option>
+          <option value="launch">Launch candidates</option>
+          <option value="product">Products of a traded token</option>
+          <option value="exchange">Exchanges</option>
+        </select>
+      </label>
+      <label class="filter">Category
+        <select id="cat"><option value="">All categories</option></select>
+      </label>
+      <label class="filter">Chain
+        <select id="chain"><option value="">All chains</option></select>
+      </label>
+      <label class="filter">Min TVL
+        <select id="minTvl">
+          <option value="0">Any TVL</option>
+          <option value="100000000">$100M+</option>
+          <option value="50000000">$50M+</option>
+          <option value="10000000">$10M+</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="watchOnly"> Watchlist only</label>
+      <button type="button" id="reset" class="btn">Reset</button>
+    </form>
+    <p class="count" id="count"></p>
+    <div class="table-wrap">
+      <table id="board">
+        <thead>
+          <tr>
+            <th data-sort="rank" class="num sorted-asc" aria-sort="ascending">#</th>
+            <th data-sort="name">Protocol</th>
+            <th data-sort="category">Category</th>
+            <th data-sort="tvl_usd" class="num">TVL</th>
+            <th data-sort="change_7d" class="num">7d</th>
+            <th data-sort="implied_value_usd" class="num">Implied value</th>
+            <th data-sort="age_days" class="num">Tracked</th>
+            <th>Farm</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="note" id="boardNote"></p>
+  </section>
+
+  <section id="view-live" class="view" hidden>
+    <p class="lede">These protocols already trade, so the board never ranks them: they are the comparables
+    the model is built from, shown here at the market's own values.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Protocol</th><th>Category</th><th class="num">TVL</th><th class="num">Market cap</th><th class="num">7d</th></tr></thead>
+        <tbody id="liveRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="view-model" class="view" hidden>
+    <h2>How the model works</h2>
+    <p>Implied value = <strong>TVL × category multiple × growth × maturity × chain spread × segment</strong>.
+    Every figure comes from the snapshot itself; no protocol name is ever special-cased.</p>
+    <ol class="model-steps">
+      <li><strong>Category multiple.</strong> The median market-cap / TVL ratio of that category's traded
+      protocols in this snapshot, each ratio clamped to [0.02, 5], then shrunk toward the whole market's
+      median (weight 4). A category with no traded member takes the market median. Market median:
+      <strong id="globalMult">—</strong>.</li>
+      <li><strong>Growth.</strong> 1 + clamp(7-day TVL change, −60%, +120%) × 0.6. A hot week is worth 60% of
+      its face; no reported change scores neutral.</li>
+      <li><strong>Maturity.</strong> 0.65 + 0.35 × min(tracked days, 1460) / 1460, times 0.85 when tracked under
+      90 days. An unrecorded listing date scores the snapshot's median age (<span id="medianAge">—</span> days).</li>
+      <li><strong>Chain spread.</strong> 1 + 0.015 per extra chain, up to eight.</li>
+      <li><strong>Segment.</strong> Launch candidates score 1.00. Products of a traded token and exchanges
+      score 0.30 — a product of a token that already trades cannot launch a token of its own at the full
+      comparable value, and an exchange token would share value with the exchange itself.</li>
+    </ol>
+    <h3>Category multiples</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Category</th><th class="num">Multiple</th><th class="num">Traded comparables</th></tr></thead>
+        <tbody id="multRows"></tbody>
+      </table>
+    </div>
+    <p class="note">Source: DefiLlama public API, fetched once and sealed in the snapshot. “Records no token”
+    means the snapshot carries no market cap, CoinGecko id or symbol for the protocol — it is not proof
+    the protocol has none.</p>
+  </section>
+</main>
+
+<aside class="drawer" id="drawer" aria-label="Protocol detail" hidden>
+  <button type="button" class="drawer-close" id="drawerClose" aria-label="Close detail">×</button>
+  <div id="detail"></div>
+</aside>
+
+<footer>
+  <p>Token Radar v2 · model radar-3 · Built from one sealed DefiLlama snapshot. Nothing here is financial
+  advice; farm only with money you can afford to lose, and only through the protocol's own pages.</p>
+</footer>
+
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
